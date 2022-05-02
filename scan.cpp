@@ -10,8 +10,8 @@
 using std::cout, std::endl, std::ifstream, std::ofstream, std::string, arma::vec;
 
 
-size_t LORENZ_WIDTH = 450; // points
-size_t N_WIDTHS = 10;      // widths in full scan
+size_t LORENZ_WIDTH = 455; // points
+size_t N_WIDTHS = 40;      // widths in full scan
 
 
 vec smooth(vec temperature, int n_smooth_points = 300) {
@@ -42,10 +42,12 @@ vec get_power(vec& temperature, double beta) {
 vec transform(vec& x, double x0) {
   double exponential_average = 0.0;
   double damping_factor = std::exp(-1.0 / x0);
+  double weight = 1.0;
   vec result(x.n_elem, arma::fill::zeros);
   for (size_t i = 0; i < x.n_elem; i++) {
     exponential_average = x[i] + damping_factor * exponential_average;
-    result[i] = exponential_average / x0;
+    weight = 1.0 + damping_factor * weight;
+    result[i] = exponential_average / weight;
   }
   return result;
 }
@@ -81,12 +83,17 @@ int main(int argc, char **argv) {
 
   vec temperature(n_points, arma::fill::zeros);
   vec power = get_power(temperature, beta);
+  vec delta_abs(simulation_iterations, arma::fill::zeros);
 
   tqdm bar;
+  double learning_rate = 0.1;
   for (size_t j = 0; j < simulation_iterations; j++) {
-    temperature = transform(power, x0);
+    vec temperature_delta = transform(power, x0) - temperature;
+    temperature = learning_rate * temperature_delta + temperature;
     // temperature = smooth(temperature, n_smooth_points);
     power = get_power(temperature, beta);
+    double mse_error = static_cast<arma::mat>(temperature_delta.t() * temperature_delta)(0,0) / temperature_delta.n_elem;
+    delta_abs[j] = std::sqrt(mse_error);
     bar.progress(j + 1, simulation_iterations);
   }
   if (beta < 0.0) {
@@ -100,6 +107,7 @@ int main(int argc, char **argv) {
   hdf5_filename << "data/" << "beta_" << beta << "_x0_" << x0 << "_simulation_iterations_" << simulation_iterations << ".hdf5";
   temperature.save(arma::hdf5_name(hdf5_filename.str(), "temperature"), arma::hdf5_binary);
   power.save(arma::hdf5_name(hdf5_filename.str(), "power", arma::hdf5_opts::append), arma::hdf5_binary);
+  delta_abs.save(arma::hdf5_name(hdf5_filename.str(), "delta_abs", arma::hdf5_opts::append), arma::hdf5_binary);
   cout << "temperature and power arrays saved to: " << endl << hdf5_filename.str() << endl;
   return 0;
 }
