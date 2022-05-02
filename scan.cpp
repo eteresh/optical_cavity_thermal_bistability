@@ -11,7 +11,7 @@ using std::cout, std::endl, std::ifstream, std::ofstream, std::string, arma::vec
 
 
 size_t LORENZ_WIDTH = 455; // points
-size_t N_WIDTHS = 40;      // widths in full scan
+size_t N_WIDTHS = 30;      // widths in full scan
 
 
 vec smooth(vec temperature, int n_smooth_points = 300) {
@@ -74,17 +74,7 @@ void parse_args(int argc, char **argv, double& beta, double& x0, size_t& simulat
 }
 
 
-int main(int argc, char **argv) {
-  size_t n_points = 2 * LORENZ_WIDTH * N_WIDTHS;
-  double beta = 1.0;
-  double x0 = 20.0;
-  size_t simulation_iterations = 100000;
-  parse_args(argc, argv, beta, x0, simulation_iterations);
-
-  vec temperature(n_points, arma::fill::zeros);
-  vec power = get_power(temperature, beta);
-  vec delta_abs(simulation_iterations, arma::fill::zeros);
-
+void simulate_scan(vec& temperature, vec& power, vec& delta_abs, double beta, double x0, size_t simulation_iterations) {
   tqdm bar;
   double learning_rate = 0.1;
   for (size_t j = 0; j < simulation_iterations; j++) {
@@ -101,13 +91,39 @@ int main(int argc, char **argv) {
     power = arma::reverse(power);
   }
   cout << endl;
+}
+
+
+int main(int argc, char **argv) {
+  size_t n_points = 2 * LORENZ_WIDTH * N_WIDTHS;
+  double beta = 1.0;
+  double x0 = 20.0;
+  size_t simulation_iterations = 100000;
+  parse_args(argc, argv, beta, x0, simulation_iterations);
 
   // saving simulation results
   std::stringstream hdf5_filename;
   hdf5_filename << "data/" << "beta_" << beta << "_x0_" << x0 << "_simulation_iterations_" << simulation_iterations << ".hdf5";
-  temperature.save(arma::hdf5_name(hdf5_filename.str(), "temperature"), arma::hdf5_binary);
-  power.save(arma::hdf5_name(hdf5_filename.str(), "power", arma::hdf5_opts::append), arma::hdf5_binary);
-  delta_abs.save(arma::hdf5_name(hdf5_filename.str(), "delta_abs", arma::hdf5_opts::append), arma::hdf5_binary);
+
+  vec temperature(n_points, arma::fill::zeros);
+  vec power = get_power(temperature, beta);
+  vec delta_abs(simulation_iterations, arma::fill::zeros);
+
+  simulate_scan(temperature, power, delta_abs, beta, x0, simulation_iterations);
+
+  temperature.save(arma::hdf5_name(hdf5_filename.str(), "temperature_up"), arma::hdf5_binary);
+  power.save(arma::hdf5_name(hdf5_filename.str(), "power_up", arma::hdf5_opts::append), arma::hdf5_binary);
+  delta_abs.save(arma::hdf5_name(hdf5_filename.str(), "delta_abs_up", arma::hdf5_opts::append), arma::hdf5_binary);
+
+
+  temperature = vec(n_points, arma::fill::zeros);
+  power = get_power(temperature, -beta);
+  delta_abs = vec(simulation_iterations, arma::fill::zeros);
+  simulate_scan(temperature, power, delta_abs, -beta, x0, simulation_iterations);
+
+  temperature.save(arma::hdf5_name(hdf5_filename.str(), "temperature_down", arma::hdf5_opts::append), arma::hdf5_binary);
+  power.save(arma::hdf5_name(hdf5_filename.str(), "power_down", arma::hdf5_opts::append), arma::hdf5_binary);
+  delta_abs.save(arma::hdf5_name(hdf5_filename.str(), "delta_abs_down", arma::hdf5_opts::append), arma::hdf5_binary);
   cout << "temperature and power arrays saved to: " << endl << hdf5_filename.str() << endl;
   return 0;
 }
