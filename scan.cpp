@@ -28,7 +28,7 @@ vec calculate_power(vec& temperature, double beta) {
 
 vec calculate_temperature(vec& power, double x0) {
   double exponential_average = 0.0;
-  double damping_factor = std::exp(-1.0 / x0);
+  double damping_factor = std::exp(-1.0 / (x0 * LORENZ_HALF_WIDTH));
   double weight = 1.0;
   vec result(power.n_elem, arma::fill::zeros);
   for (size_t i = 0; i < power.n_elem; i++) {
@@ -51,7 +51,7 @@ void parse_args(int argc, char **argv, double& beta, double& x0, size_t& simulat
     std::stringstream x0_stream(argv[2]);
     x0_stream >> x0;
   }
-  assert(x0 > 1.0);
+  assert(x0 > 0.0);
 
   if (argc >= 4) {
     std::stringstream iters_stream(argv[3]);
@@ -90,7 +90,7 @@ void simulate_scan(vec& temperature, vec& power, vec& delta_abs, double beta, do
 int main(int argc, char **argv) {
   size_t n_points = 2 * LORENZ_HALF_WIDTH * N_WIDTHS;
   double beta = 1.0;
-  double x0 = 20.0;
+  double x0 = 0.05;
   size_t simulation_iterations = 100000;
   parse_args(argc, argv, beta, x0, simulation_iterations);
 
