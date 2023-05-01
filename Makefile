@@ -6,13 +6,18 @@ SHELL=/bin/bash
 CC = h5c++
 CXXFLAGS = -O2 -std=c++17 -I .
 ARMA_FLAGS = -larmadillo -lhdf5
-DATA_DIR = data
+BUILD_DIR = ./build
+BIN_DIR = $(HOME)/bin
 
-all: scan
+all: cavity_scan
 
-scan: scan.cpp
-	mkdir -p $(DATA_DIR)
-	$(CC) scan.cpp -o $@ $(CXXFLAGS) $(ARMA_FLAGS)
+cavity_scan: cavity_scan.cpp
+	mkdir -p $(BUILD_DIR)
+	$(CC) cavity_scan.cpp -o $(BUILD_DIR)/$@ $(CXXFLAGS) $(ARMA_FLAGS)
+
+install:
+	mkdir -p $(BIN_DIR)
+	cp $(BUILD_DIR)/cavity_scan $(BIN_DIR)
 
 clean:
-	rm -rf ./scan ./scan.o
+	rm -rf cavity_scan.o $(BUILD_DIR)

@@ -1,0 +1,77 @@
+:root {
+
+  --color-success: #093;
+  --color-success-hover: #060;
+  --color-success-active: #030;
+
+  --color-alert: #c00;
+  --color-alert-hover: #933;
+  --color-alert-active: #800;
+
+  --color-primary: #0066FF;
+  --color-primary-hover: #0055FF;
+  --color-primary-active: #0055DD;
+}
+
+.input-primary {
+  border-width: 1px;
+  padding: 6px 12px;
+  border-radius: 4px;
+  border-color: var(--color-input-primary);
+  border-style: solid;
+}
+
+.input-primary:hover {
+  border-color: var(--color-primary-hover);
+}
+
+.input-primary:active {
+  border-color: var(--color-primary-active);
+}
+
+.button-main {
+  color: white;
+  border-width: 1px;
+  padding: 6px 12px;
+  border-radius: 6px;
+  border-style: solid;
+}
+
+.button-success {
+  background-color: var(--color-success);
+  border-color: var(--color-success);
+}
+.button-success:hover {
+  background-color: var(--color-success-hover);
+  border-color: var(--color-success-hover);
+}
+.button-success:active {
+  background-color: var(--color-success-active);
+  border-color: var(--color-success-active);
+}
+
+.button-alert {
+  background-color: var(--color-alert);
+  border-color: var(--color-alert);
+}
+.button-alert:hover {
+  background-color: var(--color-alert-hover);
+  border-color: var(--color-alert-hover);
+}
+.button-alert:active {
+  background-color: var(--color-alert-active);
+  border-color: var(--color-alert-active);
+}
+
+.button-primary {
+  background-color: var(--color-primary);
+  border-color: var(--color-primary);
+}
+
+.button-primary:hover {
+  background-color: var(--color-primary-hover);
+}
+
+.button-primary:active {
+  background-color: var(--color-primary-active);
+}
