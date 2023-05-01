@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title></title>
+    <link type="text/css" href="{{ url_for('static', filename='css/styles.css')}}" rel="stylesheet" />
+</head>
+<body>
+<a target="_about" href="https://github.com/eteresh/optical_cavity_thermal_bistability">source code</a>
+<form method="post" action="/">
+  <table>
+  <tr>
+    <td>
+    <label for="beta">beta:</label>
+    </td>
+    <td>
+      <input class="input-primary" name=beta value={{ beta }} type="number" step="0.001">
+    (влияние теплового расширения зеркал на сдвиг частоты)
+    </td>
+  </tr>
+  <tr>
+    <td>
+    <label for="x0">x0:</label>
+    </td>
+    <td>
+      <input class="input-primary" name="x0" value={{ x0 }} type=number step="0.001"/>
+    (частота в полуширинах исходного контура, проходимая за время температурного отклика)
+    </td>
+  </tr>
+  <tr>
+    <td>
+    <label for="simulation_iterations">simulation_iterations:</label>
+    </td>
+    <td>
+      <input class="input-primary" name=simulation_iterations value={{ simulation_iterations }} type="number" step=1000></input>
+    </td>
+  </tr>
+
+  </table>
+  <button class="button-main button-primary" type="submit">Запустить расчет</button>
+</form>
+{% if started %}
+Симуляция для параметров: <code>beta: {{ beta }}, x0: {{ x0 }}, simulation_iterations: {{ simulation_iterations }}</code>, успешно запущена. Дождитесь файла с результатами в списке ниже.
+{% endif %}
+
+{% if files %}
+<p>Файлы, доступные для загрузки:</p>
+{% for filename in files %}
+<p>
+<a href="/load/{{ filename }}">{{ filename }}</a>
+</p>
+{% endfor %}
+{% endif %}
+</body>
+</html>

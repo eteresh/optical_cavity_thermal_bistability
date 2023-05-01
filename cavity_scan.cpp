@@ -1,6 +1,7 @@
 #define ARMA_USE_HDF5
 
 #include <iostream>
+#include <filesystem>
 #include <vector>
 #include <cmath>
 #include <cassert>
@@ -40,26 +41,24 @@ vec calculate_temperature(vec& power, double x0) {
 }
 
 
-void parse_args(int argc, char **argv, double& beta, double& x0, size_t& simulation_iterations) {
-  if (argc >= 2) {
-    std::stringstream beta_stream(argv[1]);
-    beta_stream >> beta;
-  }
+void parse_args(int argc, char **argv, double& beta, double& x0, size_t& simulation_iterations, string& dest_dir) {
+
+  std::stringstream beta_stream(argv[1]);
+  beta_stream >> beta;
   assert(beta >= 0.0);
 
-  if (argc >= 3) {
-    std::stringstream x0_stream(argv[2]);
-    x0_stream >> x0;
-  }
+  std::stringstream x0_stream(argv[2]);
+  x0_stream >> x0;
   assert(x0 > 0.0);
 
-  if (argc >= 4) {
-    std::stringstream iters_stream(argv[3]);
-    iters_stream >> simulation_iterations;
-  }
+  std::stringstream iters_stream(argv[3]);
+  iters_stream >> simulation_iterations;
+
+  dest_dir = string(argv[4]);
   cout << "beta (temperature contribution to frequency offset): " << beta << endl;
   cout << "x0 (frequency scan speed): " << x0 << endl;
   cout << "simulation iterations: " << simulation_iterations << endl;
+  cout << "dest_dir: " << dest_dir << endl;
 }
 
 
@@ -92,11 +91,16 @@ int main(int argc, char **argv) {
   double beta = 1.0;
   double x0 = 0.05;
   size_t simulation_iterations = 100000;
-  parse_args(argc, argv, beta, x0, simulation_iterations);
+  string dest_dir;
+  parse_args(argc, argv, beta, x0, simulation_iterations, dest_dir);
 
   // saving simulation results
+  std::stringstream filename;
+  filename << "beta_" << argv[1] << "_x0_" << argv[2] << "_simulation_iterations_" << argv[3] << ".hdf5";
   std::stringstream hdf5_filename;
-  hdf5_filename << "data/" << "beta_" << beta << "_x0_" << x0 << "_simulation_iterations_" << simulation_iterations << ".hdf5";
+  hdf5_filename << dest_dir << "/" << filename.str();
+  std::stringstream tmp_hdf5_filename;
+  tmp_hdf5_filename << dest_dir << "/" << "." << filename.str();
 
   vec temperature(n_points, arma::fill::zeros);
   vec power = calculate_power(temperature, beta);
@@ -104,9 +108,9 @@ int main(int argc, char **argv) {
 
   simulate_scan(temperature, power, delta_abs, beta, x0, simulation_iterations);
 
-  temperature.save(arma::hdf5_name(hdf5_filename.str(), "temperature_up"), arma::hdf5_binary);
-  power.save(arma::hdf5_name(hdf5_filename.str(), "power_up", arma::hdf5_opts::append), arma::hdf5_binary);
-  delta_abs.save(arma::hdf5_name(hdf5_filename.str(), "delta_abs_up", arma::hdf5_opts::append), arma::hdf5_binary);
+  temperature.save(arma::hdf5_name(tmp_hdf5_filename.str(), "temperature_up"), arma::hdf5_binary);
+  power.save(arma::hdf5_name(tmp_hdf5_filename.str(), "power_up", arma::hdf5_opts::append), arma::hdf5_binary);
+  delta_abs.save(arma::hdf5_name(tmp_hdf5_filename.str(), "delta_abs_up", arma::hdf5_opts::append), arma::hdf5_binary);
 
 
   temperature = vec(n_points, arma::fill::zeros);
@@ -114,9 +118,11 @@ int main(int argc, char **argv) {
   delta_abs = vec(simulation_iterations / 10, arma::fill::zeros);
   simulate_scan(temperature, power, delta_abs, -beta, x0, simulation_iterations);
 
-  temperature.save(arma::hdf5_name(hdf5_filename.str(), "temperature_down", arma::hdf5_opts::append), arma::hdf5_binary);
-  power.save(arma::hdf5_name(hdf5_filename.str(), "power_down", arma::hdf5_opts::append), arma::hdf5_binary);
-  delta_abs.save(arma::hdf5_name(hdf5_filename.str(), "delta_abs_down", arma::hdf5_opts::append), arma::hdf5_binary);
+  temperature.save(arma::hdf5_name(tmp_hdf5_filename.str(), "temperature_down", arma::hdf5_opts::append), arma::hdf5_binary);
+  power.save(arma::hdf5_name(tmp_hdf5_filename.str(), "power_down", arma::hdf5_opts::append), arma::hdf5_binary);
+  delta_abs.save(arma::hdf5_name(tmp_hdf5_filename.str(), "delta_abs_down", arma::hdf5_opts::append), arma::hdf5_binary);
+
+  std::filesystem::rename(tmp_hdf5_filename.str(), hdf5_filename.str());
   cout << "temperature and power arrays saved to: " << endl << hdf5_filename.str() << endl;
   return 0;
 }
